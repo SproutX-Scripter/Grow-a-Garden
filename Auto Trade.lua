@@ -1,128 +1,129 @@
---[[
-Vojo Man Auto Trading
-Theme: Retro
-Colors: Beige (Background), Red (Buttons)
-Note: Only supports fruit scanning and trading for now
-]]
+-- Vojo Man Auto Trading UI + Functional Auto Fruit Trader
+-- Theme: Retro Beige and Red | Game: Grow A Garden | Author: ChatGPT + User
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Dummy inventory for testing purpose
-local mockInventory = {
-    Apple = 10,
-    Mango = 5,
-    Pineapple = 3,
-    Banana = 8,
-    Watermelon = 1
-}
+-- SETTINGS --
+local TARGET_PLAYER_NAME = ""  -- You can change this or make it dynamic later
+local AUTO_TRADE = false
+local TRADE_INTERVAL = 3  -- seconds
 
-local fruitValues = {
-    Apple = 10000,
-    Mango = 50000,
-    Pineapple = 75000,
-    Banana = 30000,
-    Watermelon = 100000
-}
+-- UI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "VojoManAutoTrading"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = PlayerGui
 
--- Create GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "VojoManAutoTraderGUI"
-gui.ResetOnSpawn = false
-gui.Parent = playerGui
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 500)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
-mainFrame.BackgroundColor3 = Color3.fromRGB(245, 235, 220) -- Beige
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Draggable = true
-mainFrame.Parent = gui
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 180)
+frame.Position = UDim2.new(0.02, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(245, 233, 211)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+frame.Active = true
+frame.Draggable = true
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 50)
-title.BackgroundTransparency = 1
-title.Text = "🍀 Vojo Man Auto Trading"
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Text = "Vojo Man Auto Trading"
 title.Font = Enum.Font.FredokaOne
-title.TextColor3 = Color3.fromRGB(170, 30, 30) -- Red
 title.TextScaled = true
-title.Parent = mainFrame
+title.Parent = frame
 
--- Target Value Input
+-- Target Input
 local targetBox = Instance.new("TextBox")
-targetBox.PlaceholderText = "Target Value (e.g., 50k, 100k)"
-targetBox.Position = UDim2.new(0.1, 0, 0.15, 0)
-targetBox.Size = UDim2.new(0.8, 0, 0, 35)
+targetBox.PlaceholderText = "Target player name"
+targetBox.Size = UDim2.new(1, -20, 0, 25)
+targetBox.Position = UDim2.new(0, 10, 0, 40)
 targetBox.Text = ""
+targetBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+targetBox.TextColor3 = Color3.new(0, 0, 0)
 targetBox.Font = Enum.Font.Gotham
 targetBox.TextScaled = true
-targetBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-targetBox.TextColor3 = Color3.fromRGB(0, 0, 0)
-targetBox.Parent = mainFrame
+targetBox.Parent = frame
 
--- Scan Inventory and Match Fruit
-local resultLabel = Instance.new("TextLabel")
-resultLabel.Position = UDim2.new(0.1, 0, 0.25, 0)
-resultLabel.Size = UDim2.new(0.8, 0, 0, 100)
-resultLabel.Text = "Scan result will appear here."
-resultLabel.BackgroundTransparency = 1
-resultLabel.TextWrapped = true
-resultLabel.TextScaled = true
-resultLabel.Font = Enum.Font.Gotham
-resultLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-resultLabel.Parent = mainFrame
+targetBox.FocusLost:Connect(function()
+    TARGET_PLAYER_NAME = targetBox.Text
+end)
 
-local function parseTargetValue(str)
-    str = str:lower():gsub(",", ""):gsub("%s", "")
-    local num = tonumber(str:match("%d+")) or 0
-    if str:find("k") then
-        num = num * 1000
-    elseif str:find("m") then
-        num = num * 1_000_000
-    elseif str:find("b") then
-        num = num * 1_000_000_000
-    end
-    return num
-end
+-- Toggle Auto
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(1, -20, 0, 30)
+toggleBtn.Position = UDim2.new(0, 10, 0, 75)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+toggleBtn.Text = "Auto Trade: OFF"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextScaled = true
+toggleBtn.Parent = frame
 
-local function scanAndMatch()
-    local target = parseTargetValue(targetBox.Text)
-    local result = ""
-    for fruit, quantity in pairs(mockInventory) do
-        local value = fruitValues[fruit] or 0
-        local totalValue = value * quantity
-        if totalValue >= target then
-            result = result .. fruit .. " x" .. quantity .. " = " .. totalValue .. "\n"
+toggleBtn.MouseButton1Click:Connect(function()
+    AUTO_TRADE = not AUTO_TRADE
+    toggleBtn.Text = "Auto Trade: " .. (AUTO_TRADE and "ON" or "OFF")
+end)
+
+-- Status label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -20, 0, 30)
+statusLabel.Position = UDim2.new(0, 10, 0, 115)
+statusLabel.BackgroundTransparency = 1
+statusLabel.TextColor3 = Color3.fromRGB(70, 70, 70)
+statusLabel.Text = "Status: Idle"
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextScaled = true
+statusLabel.Parent = frame
+
+-- Core: Find and Trade Fruit
+local function findFruitInInventory()
+    local inv = LocalPlayer:FindFirstChild("Backpack") or LocalPlayer:WaitForChild("Backpack")
+    for _, item in pairs(inv:GetChildren()) do
+        if item:IsA("Tool") and item.Name:lower():find("fruit") then
+            return item
         end
     end
-    if result == "" then
-        resultLabel.Text = "No suitable fruit matches found."
+    return nil
+end
+
+local function findPlayerByName(name)
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr.Name:lower():find(name:lower()) then
+            return plr
+        end
+    end
+    return nil
+end
+
+local function tradeFruit()
+    local fruit = findFruitInInventory()
+    local target = findPlayerByName(TARGET_PLAYER_NAME)
+
+    if fruit and target then
+        -- Example trade function (adjust to actual game logic):
+        local event = ReplicatedStorage:FindFirstChild("TradeRequest")
+        if event then
+            event:FireServer(target, fruit)
+            statusLabel.Text = "Status: Traded " .. fruit.Name .. " to " .. target.Name
+        else
+            statusLabel.Text = "Status: Trade event not found"
+        end
     else
-        resultLabel.Text = "Matching Fruits:\n" .. result
+        statusLabel.Text = "Status: No fruit or target"
     end
 end
 
-local scanBtn = Instance.new("TextButton")
-scanBtn.Text = "🔍 Scan Inventory"
-scanBtn.Size = UDim2.new(0.8, 0, 0, 40)
-scanBtn.Position = UDim2.new(0.1, 0, 0.45, 0)
-scanBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40) -- Red
-scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-scanBtn.Font = Enum.Font.GothamBold
-scanBtn.TextScaled = true
-scanBtn.Parent = mainFrame
-scanBtn.MouseButton1Click:Connect(scanAndMatch)
+-- Loop
+task.spawn(function()
+    while true do
+        if AUTO_TRADE and TARGET_PLAYER_NAME ~= "" then
+            tradeFruit()
+        end
+        task.wait(TRADE_INTERVAL)
+    end
+end)
 
--- Placeholder Auto Trade Button (not functional yet)
-local tradeBtn = Instance.new("TextButton")
-tradeBtn.Text = "🚀 Start Auto Trade"
-tradeBtn.Size = UDim2.new(0.8, 0, 0, 40)
-tradeBtn.Position = UDim2.new(0.1, 0, 0.55, 0)
-tradeBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-tradeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-tradeBtn.Font = Enum.Font.GothamBold
-tradeBtn.TextScaled = true
-tradeBtn.Parent = mainFrame
+-- End of Script
