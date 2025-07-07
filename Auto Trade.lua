@@ -29,9 +29,9 @@ local fruitValues = {
 
 -- Create GUI
 local gui = Instance.new("ScreenGui")
-gu i.Name = "VojoManAutoTraderGUI"
-gu i.ResetOnSpawn = false
-gu i.Parent = playerGui
+gui.Name = "VojoManAutoTraderGUI"
+gui.ResetOnSpawn = false
+gui.Parent = playerGui
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 500)
@@ -47,9 +47,7 @@ title.Size = UDim2.new(1, 0, 0, 50)
 title.BackgroundTransparency = 1
 title.Text = "🍀 Vojo Man Auto Trading"
 title.Font = Enum.Font.FredokaOne
-
 title.TextColor3 = Color3.fromRGB(170, 30, 30) -- Red
-
 title.TextScaled = true
 title.Parent = mainFrame
 
@@ -73,7 +71,8 @@ resultLabel.Text = "Scan result will appear here."
 resultLabel.BackgroundTransparency = 1
 resultLabel.TextWrapped = true
 resultLabel.TextScaled = true
-resultLabel.Font = Enum.Font.Gotham\ nresultLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+resultLabel.Font = Enum.Font.Gotham
+resultLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 resultLabel.Parent = mainFrame
 
 local function parseTargetValue(str)
@@ -127,4 +126,3 @@ tradeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 tradeBtn.Font = Enum.Font.GothamBold
 tradeBtn.TextScaled = true
 tradeBtn.Parent = mainFrame
--- future feature hook
